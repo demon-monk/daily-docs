@@ -290,4 +290,227 @@ git merge --no-ff
 git config rerere.enabled true
 ```
 
+# git history
+
+## git log
+
+```sh
+# 通过正则匹配commit msg的形式过滤git log
+git log -grep <regexp>
+# mix with other filter flags
+git log --grep=mail --author=nina --since=2.weeks
+```
+
+## hat & tilde
+
+### ^：用于指向某个父级commit
+
+- ^: 没有参数，代表第一个父级commit
+- ^n: 代表指向nth 父级commit
+
+### ~: 用于表示回溯多少个父级commit，只沿第一个父级commit回溯
+
+- ~：没有参数代表回溯一级
+- ~n：代表回溯n级
+
+![](http://ov532c17r.bkt.clouddn.com/5lrxf1u6ygr.png)
+
+## git show
+
+```Sh
+# show commit and contents
+git show <commit>
+```
+
+![mage-20180819124925](/var/folders/kb/_ptsg_tj3_9gqyz8fv0mzlzw0000gn/T/abnerworks.Typora/image-201808191249255.png)
+
+```sh
+# show files changed in commit
+git show <commit> --stat
+```
+
+![mage-20180819125013](/var/folders/kb/_ptsg_tj3_9gqyz8fv0mzlzw0000gn/T/abnerworks.Typora/image-201808191250131.png)
+
+```sh
+# look at a file from another commit
+git show <commit>:<file>
+```
+
+![](http://ov532c17r.bkt.clouddn.com/6g7xp9l4lsl.png)
+
+## git diff
+
+```sh
+# unstaged changes
+git diff
+# staged changes
+git diff --staged
+# 相对branch A来说， branch B有哪些改变
+git diff <branchA> <branchB>
+# or
+git diff <branchA>..<branchB>
+```
+
+## diff branches
+
+```sh
+# 列出已经合进master的分支，可以被删除
+git branch --merged master
+# otherwise
+git branch --no-merged master
+```
+
+# Fixing Mistakes
+
+## git checkout
+
+### checkout a branch
+
+- HEAD指向新的branch
+- 从新branch的最新commit中取出文件内容拷贝到staging area
+- 从staging area拷贝到working area
+
+![](http://ov532c17r.bkt.clouddn.com/pboims74lwr.png)
+
+### checkout — file/path 
+
+- 从staging area拷贝到working area中
+
+![](http://ov532c17r.bkt.clouddn.com/3urtpnz4cwa.png)
+
+> `—`是为了防止文件和分支重名
+
+### checkout <commit> — file/path
+
+- 从repo中取出文件内容拷贝到staging area中
+- 从staging area中取出文件内容拷贝到working area中
+
+![](http://ov532c17r.bkt.clouddn.com/b0jo36gy2wv.png)
+
+## git clean
+
+deleting untracked files
+
+```sh
+# see what files would be deleted
+git clean --dry-run
+# see what files and directories would be deleted
+git clean -d --dry-run
+```
+
+![](http://ov532c17r.bkt.clouddn.com/y959b5e8f6.png)
+
+```sh
+# delete untracked files
+git clean -f
+```
+
+![](http://ov532c17r.bkt.clouddn.com/9ws2zziv4g.png)
+
+```sh
+#delete untracked directories and files
+git clean -fd
+```
+
+![mage-20180819141824](/var/folders/kb/_ptsg_tj3_9gqyz8fv0mzlzw0000gn/T/abnerworks.Typora/image-201808191418248.png)
+
+## git reset
+
+### git reset —soft 
+
+仅仅将HEAD指向参数指定的commit
+
+![](http://ov532c17r.bkt.clouddn.com/o1bav5vrin.png)
+
+### git reset —mixed <default>
+
+- 将HEAD指向参数指定的commit
+- 并将对应commit的内容拷贝到staging area
+
+![](http://ov532c17r.bkt.clouddn.com/0rwfzxfj1zho.png)
+
+### git reset —hard
+
+- 将HEAD指向参数指定的commit
+- 将对应commit的内容拷贝到staging area
+- 将staging area的内容拷贝到working area
+
+![](http://ov532c17r.bkt.clouddn.com/91r6geo67t.png)
+
+### git reset <commit>
+
+1. 将HEAD和当前分支指向这个commit
+2. 将对应内容拷贝到staging area
+3. 将对应内容拷贝到working area
+
+```sh
+--soft (1)
+--mixed (1) & (2)
+--hard (1) & (2) & (3)
+```
+
+### git reset 会修改git history
+
+通过git reset使HEAD从A到B，然后再进行新的commit，那么git history就变了。公共仓库已经有的history不能被改变。
+
+### 恢复
+
+git会保留HEAD的上一个版本叫`ORIG_HEAD`，所以`git reset`后，可以通过如下命令恢复
+
+```sh
+git reset ORIG_HEAD
+```
+
+### git reset <commit> —file
+
+只修改staging area中的内容，不移动HEAD，不带`--soft --mixed --hard `
+
+![](http://ov532c17r.bkt.clouddn.com/4uo857jegyj.png)
+
+## git revert
+
+创建一个新的commit，这个commit是和指定commit相反的操作。原来的commit依旧还在，所以不会修改git history。`git revert`用来撤销已经推入公共仓库的commit。
+
+# 修改已有的commit
+
+## Amend
+
+commit之后发现有些东西没有提交上去，可以用
+
+```sh
+git commit --amend
+```
+
+
+
+![](http://ov532c17r.bkt.clouddn.com/vmskyi1wsff.png)
+
+![](http://ov532c17r.bkt.clouddn.com/3mvnj6ypm0k.png)
+
+  ## rebase：give a commit a new parent
+
+当我们当前分支和master分支diverged（合并时不能fast forward）。我们希望在合并的时候不要产生看起来很混乱的merge节点。这时候正确的做法是
+
+- 从master上获取最新的内容
+- 使当前的分支以master的最新commit作为父节点
+
+![](http://ov532c17r.bkt.clouddn.com/mcdfqo2605.png)
+
+![](http://ov532c17r.bkt.clouddn.com/m4y1y1l0isq.png)
+
+>git rebase只能对于还没有shared的分支使用（没有人基于你分支上独有的commit进行开发）。
+
+### [git rebase -i (interaction)](https://robots.thoughtbot.com/git-interactive-rebase-squash-amend-rewriting-history)
+
+![ ](http://ov532c17r.bkt.clouddn.com/fad0b1dlt6i.png)
+
+#### split commits
+
+![](http://ov532c17r.bkt.clouddn.com/8qyfhd17rmd.png)
+
+ ### git rebase —abort  
+
+在rebase中间的任何阶段都可以通过abort放弃这次rebase
+
+### 当rebase用得不6时，rebase之前先切一个新的分支作备份
 
